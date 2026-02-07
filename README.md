@@ -18,6 +18,36 @@ Kong Enterprise Edition에는 외부 인증 서버로 요청을 전달하는 기
 - Upstream 요청에 `Authorization: Bearer <token>` 헤더 추가
 - 인증 실패 시 `401 Unauthorized` 반환
 
+## 인증 흐름
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant K as Kong
+    participant P as external-auth Plugin
+    participant O as OAuth2-Proxy
+    participant U as Upstream API
+
+    C->>K: HTTP Request (/api)<br>Cookie 포함
+
+    K->>P: access phase 호출
+
+    P->>O: GET /oauth2/auth<br>headers: client headers 전달
+
+    alt 인증 실패
+        O-->>P: 401 Unauthorized
+        P-->>K: 인증 실패 응답
+        K-->>C: 401 Unauthorized
+    else 인증 성공
+        O-->>P: 200 OK<br>X-Auth-Request-Access-Token
+        P->>P: Authorization header 재작성<br>Bearer <access_token>
+        P-->>K: 수정된 요청 전달
+        K->>U: HTTP Request<br>Authorization: Bearer <token>
+        U-->>K: API Response
+        K-->>C: API Response
+    end
+```
+
 ## 설치 방법
 
 1. 플러그인 코드 배치
