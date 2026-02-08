@@ -21,6 +21,7 @@ function ExternalAuthHandler:access(conf)
 	local res, err = client:request_uri(conf.url, {
 		method = kong.request.get_method(),
 		headers = kong.request.get_headers(),
+		body = kong.request.get_raw_body(),
 	})
 
 	if not res then
@@ -39,7 +40,7 @@ function ExternalAuthHandler:access(conf)
 		kong.service.request.set_header("Authorization", "Bearer " .. accessToken)
 
 		kong.log.debug("Set Authorization header with access token from oauth2-proxy")
-		kong.log.debug("Updated Authorization header: ", kong.service.request.get_header("Authorization"))
+		kong.log.debug("Updated Authorization header: ", accessToken)
 	else
 		kong.log.err("No X-Auth-Request-Access-Token header received")
 	end
