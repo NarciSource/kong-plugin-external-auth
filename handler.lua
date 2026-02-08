@@ -6,6 +6,14 @@ local ExternalAuthHandler = {
 }
 
 function ExternalAuthHandler:access(conf)
+	local authHeader = kong.request.get_header("Authorization")
+
+	if authHeader then
+		kong.log.debug("Authorization header already present, skipping oauth2-proxy call")
+		kong.log.debug("Existing Authorization header: ", authHeader)
+		return
+	end
+
 	local client = http.new()
 
 	client:set_timeouts(conf.connect_timeout, conf.send_timeout, conf.read_timeout)
@@ -29,6 +37,9 @@ function ExternalAuthHandler:access(conf)
 		kong.service.request.clear_header("Authorization")
 
 		kong.service.request.set_header("Authorization", "Bearer " .. accessToken)
+
+		kong.log.debug("Set Authorization header with access token from oauth2-proxy")
+		kong.log.debug("Updated Authorization header: ", kong.service.request.get_header("Authorization"))
 	else
 		kong.log.err("No X-Auth-Request-Access-Token header received")
 	end
